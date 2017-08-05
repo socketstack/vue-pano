@@ -1,15 +1,15 @@
 <template>
-  <div class="vue-pano viewport" v-el:viewport :class="{ dragging: dragging }"
+  <div class="vue-pano viewport" ref="viewport" :class="{ dragging: dragging }"
       @mousedown="startDrag" @touchstart="startDrag"
       @mousemove="onDrag" @touchmove="onDrag"
       @mouseup="stopDrag" @touchend="stopDrag" @mouseleave="stopDrag">
 
     <div class="error" v-if="error"><span>{{ error }}</span></div>
     <template v-else>
-      <div class="controls" v-el:controls>
+      <div class="controls" ref="controls">
         <div class="zoom handle">
-          <button class="zoomin" v-el:zoomin @click="zoomin">+</button>
-          <button class="zoomout" v-el:zoomout @click="zoomout">-</button>
+          <button class="zoomin" ref="zoomin" @click="zoomin">+</button>
+          <button class="zoomout" ref="zoomout" @click="zoomout">-</button>
         </div>
 
         <div class="campas">
@@ -25,7 +25,7 @@
       <div class="handle toggle-fullscreen">
         <button @click="toggleFullscreen"></button>
       </div>
-      <canvas v-el:canvas></canvas>
+      <canvas ref="canvas"></canvas>
       <div class="debug" v-show="debug">fov: {{ fov }}, theta: {{ theta }}, phi: {{ phi }}</div>
     </template>
 
@@ -35,11 +35,11 @@
 <script>
 import Aff3d from './aff3d.js'
 import Vec3 from './vec3.js'
-import {clamp} from './util.js'
+import { clamp } from './util.js'
 
 const shaders = {
-  fragment: require('raw!./fragment.glsl'),
-  vertex: require('raw!./vertex.glsl')
+  fragment: require('./fragment.glsl'),
+  vertex: require('./vertex.glsl')
 }
 
 const Promise = window.Promise || require('es6-promise').Promise;
@@ -119,7 +119,7 @@ export default {
 
     resize() {
       const ratio = window.devicePixelRatio || 1
-      const {canvas, viewport} = this.$els
+      const {canvas, viewport} = this.$refs
       let {width, height} = this
 
       if (this.fullscreen) {
@@ -363,8 +363,8 @@ export default {
     }
   },
 
-  ready() {
-    const {canvas} = this.$els
+  mounted() {
+    const {canvas} = this.$refs
     const gl = this.gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
 
     if (!gl) {
