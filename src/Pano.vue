@@ -1,5 +1,5 @@
 <template>
-  <div class="vue-pano viewport" v-el:viewport 
+  <div class="vue-pano viewport" v-el:viewport :class="{ dragging: dragging }"
       @mousedown="startDrag" @touchstart="startDrag"
       @mousemove="onDrag" @touchmove="onDrag"
       @mouseup="stopDrag" @touchend="stopDrag" @mouseleave="stopDrag">
@@ -473,6 +473,11 @@ export default {
       -ms-user-select: none; /* Internet Explorer/Edge */
           user-select: none; /* Non-prefixed version, currently
                                 supported by Chrome and Opera */
+  cursor: -webkit-grab;
+}
+
+.viewport.dragging {
+  cursor: -webkit-grabbing;
 }
 
 .viewport > * {
