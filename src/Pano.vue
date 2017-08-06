@@ -366,10 +366,6 @@ export default {
     const zoom = this.zoom.bind(this)
     const resize = this.resize.bind(resize)
 
-    if (!window.addEventListener) {
-      throw Error('Browser is not supported')
-    }
-
     this.$el.addEventListener('mousewheel', zoom, false)
     this.$el.addEventListener('DOMMouseScroll', zoom, false)
     addEventListener('resize', resize, false)
