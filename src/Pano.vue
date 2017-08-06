@@ -119,18 +119,33 @@ export default {
 
     resize() {
       const ratio = window.devicePixelRatio || 1
-      const {canvas, viewport} = this.$refs
+      const { canvas, viewport } = this.$refs
       let { width, height } = this
 
       if (this.fullscreen.element && document[this.fullscreen.element] == this.$el) {
         height = width = '100%'
       } else if (+width == width && +height == height) {
-        width += 'px'
-        height += 'px'
+        if (width > screen.width || height > height.width) {
+          width = height = 0
+        } else {
+          height += 'px'
+          width += 'px'
+        }
       }
 
-      canvas.style.width = viewport.style.width = width ? width : '100%'
-      canvas.style.height = viewport.style.height = height ? height : '100%'
+      if (width) {
+          canvas.style.width = viewport.style.width = width
+      } else {
+          viewport.style.width = '100vw'
+          canvas.style.width = '100%'
+      }
+
+      if (height) {
+          canvas.style.height = viewport.style.height = height
+      } else {
+          viewport.style.height = '100vh'
+          canvas.style.height = '100%'
+      }
 
       canvas.width = canvas.clientWidth * ratio
       canvas.height = canvas.clientHeight * ratio
