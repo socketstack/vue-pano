@@ -35,6 +35,10 @@
         text-align: center;
       }
 
+      pre.code {
+        white-space: pre-wrap;
+      }
+
       .vue-pano {
         margin: 10px auto;
       }
@@ -50,8 +54,17 @@
 
     <p>示例代码</p>
 
-    <pre style='color:#000000;background:#ffffff;'><span style='color:#a65700; '>&lt;</span><span style='color:#5f5035; '>pano</span><span style='color:#274796; '> </span><span style='color:#074726; '>title</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"长亭科技前台"</span><span style='color:#274796; '> </span><span style='color:#074726; '>width</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"720"</span><span style='color:#274796; '> </span><span style='color:#074726; '>height</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"480"</span><span style='color:#274796; '> bundle</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"assets/pano/reception/"</span><span style='color:#274796; '> format</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"jpg"</span><span style='color:#a65700; '>></span><span style='color:#a65700; '>&lt;/</span><span style='color:#5f5035; '>pano</span><span style='color:#a65700; '>></span>
+    <pre id="example" class="code" style='color:#000000;background:#ffffff;'><span style='color:#a65700; '>&lt;</span><span style='color:#5f5035; '>pano</span><span style='color:#274796; '> </span><span style='color:#074726; '>title</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"长亭科技前台"</span><span style='color:#274796; '> </span><span style='color:#074726; '>width</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"720"</span><span style='color:#274796; '> </span><span style='color:#074726; '>height</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"480"</span><span style='color:#274796; '> bundle</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"assets/pano/reception/"</span><span style='color:#274796; '> format</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"jpg"</span><span style='color:#a65700; '>></span><span style='color:#a65700; '>&lt;/</span><span style='color:#5f5035; '>pano</span><span style='color:#a65700; '>></span>
 <span style='color:#a65700; '>&lt;</span><span style='color:#5f5035; '>pano</span><span style='color:#274796; '> </span><span style='color:#074726; '>title</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"茶水间"</span><span style='color:#274796; '> </span><span style='color:#074726; '>width</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"720"</span><span style='color:#274796; '> </span><span style='color:#074726; '>height</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"480"</span><span style='color:#274796; '> bundle</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"assets/pano/pantry/"</span><span style='color:#274796; '> format</span><span style='color:#808030; '>=</span><span style='color:#0000e6; '>"jpg"</span><span style='color:#a65700; '>></span><span style='color:#a65700; '>&lt;/</span><span style='color:#5f5035; '>pano</span><span style='color:#a65700; '>></span></pre>
+    <script type="text/javascript">
+      document.getElementById('example').addEventListener('click', function() {
+        var selection = window.getSelection();
+        var range = document.createRange();
+        range.selectNodeContents(this);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      })
+    </script>
     <script src="dist/build.js"></script>
   </body>
 </html>
