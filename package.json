@@ -8,8 +8,13 @@
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "publish": "git checkout gh-pages && git rebase master && npm run build && git add . && git commit -m 'update website' && git push -f origin gh-pages; git checkout master"
   },
+  "version": "1.0",
+  "keywords": ["webgl", "browser", "panorama"],
+  "homepage": "https://chichou.github.io/vue-pano",
+  "bugs": "https://github.com/ChiChou/vue-pano/issues",
+  "contributors": ["CodeColorist"], 
   "license": "MIT",
-  "repository": "git://github.com/ChiChou/vue-pano.git",
+  "repository": "https://github.com/ChiChou/vue-pano.git",
   "dependencies": {
     "babel-runtime": "^6.25.0",
     "es6-promise": "^4.1.1",
