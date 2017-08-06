@@ -401,7 +401,6 @@ export default {
     width: String,
     height: String,
     title: String,
-    front: String,
     bundle: String,
     format: String,
     debug: String,
