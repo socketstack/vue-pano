@@ -22,7 +22,7 @@
 
       <h3 class="title">{{ title }}</h3>
 
-      <div class="handle toggle-fullscreen">
+      <div class="handle toggle-fullscreen" v-show="fullscreen.element">
         <button @click="toggleFullscreen"></button>
       </div>
       <canvas ref="canvas"></canvas>
@@ -120,9 +120,9 @@ export default {
     resize() {
       const ratio = window.devicePixelRatio || 1
       const {canvas, viewport} = this.$refs
-      let {width, height} = this
+      let { width, height } = this
 
-      if (this.fullscreen) {
+      if (this.fullscreen.element && document[this.fullscreen.element] == this.$el) {
         height = width = '100%'
       } else if (+width == width && +height == height) {
         width += 'px'
@@ -275,29 +275,14 @@ export default {
     },
 
     toggleFullscreen() {
-      this.fullscreen = !this.fullscreen
+      let { element, enter, leave } = this.fullscreen
+      if (!element)
+        return
 
-      let enter = this.$el.requestFullsceen,
-        leave = document.cancelFullScreen;
-
-      if (!enter) {
-        for (let vendor of ['webkit', 'moz', 'ms']) {
-          if ((vendor + 'RequestFullscreen') in this.$el) {
-            enter = this.$el[vendor + 'RequestFullscreen']
-            leave = document[vendor + 'ExitFullscreen']
-            break;
-          }
-        }
-
-        if (!enter) {
-          console.warn('Fullscreen API not avaliable on this browser')
-        }
-      }
-
-      if (this.fullscreen) {
-        enter.call(this.$el)
+      if (document[element]) {
+        document[leave]()
       } else {
-        leave.call(document)
+        this.$el[enter]()
       }
 
       this.resize()
@@ -381,15 +366,33 @@ export default {
     const zoom = this.zoom.bind(this)
     const resize = this.resize.bind(resize)
 
-    if (window.addEventListener) {
-      this.$el.addEventListener('mousewheel', zoom, false)
-      this.$el.addEventListener('DOMMouseScroll', zoom, false)
-      addEventListener('resize', resize, false)
-      addEventListener('touchmove', event => event.preventDefault(), false)
-      document.body.addEventListener('touchstart', event => event.preventDefault())
-    } else {
-      this.$el.attachEvent('onmousewheel', zoom)
-      attachEvent('resize', resize)
+    if (!window.addEventListener) {
+      throw Error('Browser is not supported')
+    }
+
+    this.$el.addEventListener('mousewheel', zoom, false)
+    this.$el.addEventListener('DOMMouseScroll', zoom, false)
+    addEventListener('resize', resize, false)
+    addEventListener('touchmove', event => event.preventDefault(), false)
+    document.body.addEventListener('touchstart', event => event.preventDefault())
+
+    const vendors = [
+      ['requestFullsceen', 'fullScreenElement', 'cancelFullScreen'],
+      ['webkitRequestFullscreen', 'webkitFullscreenElement', 'webkitCancelFullScreen'],
+      ['mozRequestFullScreen', 'mozFullScreenElement', 'mozCancelFullScreen'],
+      ['msRequestFullscreen', 'msFullscreenElement', 'msExitFullscreen']
+    ]
+
+    for (let vendor of vendors) {
+      let [enter, element, leave] = vendor
+      if (typeof this.$el[enter] == 'function') {
+        this.fullscreen = { enter, element, leave }
+        break
+      }
+    }
+
+    if (!this.fullscreen.element) {
+      console.warn('Fullscreen API not avaliable on this browser')
     }
 
     this.initShaders()
@@ -415,7 +418,7 @@ export default {
       dragging: false,
       pinching: false,
       error: '',
-      fullscreen: false,
+      fullscreen: {},
 
       phi: 90,
       theta: 0,
