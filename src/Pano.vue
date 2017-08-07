@@ -47,17 +47,21 @@ const Promise = window.Promise || require('es6-promise').Promise;
 export default {
   methods: {
     reset() {
-      this.phi = this.theta = 0
+      this.animating = true
+      this.target.theta = 0
+      this.target.phi = this.phi - (this.phi % 360)
     },
 
     zoomin(e) {
-      let fov = this.fov -= 4
-      this.fov = clamp(fov, this.minFov, this.maxFov)
+      let fov = this.fov - 20
+      this.animating = true
+      this.target.fov = clamp(fov, this.minFov, this.maxFov)
     },
 
     zoomout(e) {
-      let fov = this.fov += 4
-      this.fov = clamp(fov, this.minFov, this.maxFov)
+      let fov = this.fov + 20
+      this.animating = true
+      this.target.fov = clamp(fov, this.minFov, this.maxFov)
     },
 
     startDrag(e) {
@@ -75,6 +79,7 @@ export default {
       e = e.changedTouches ? e.changedTouches[0] : e
       this.dragging = true
       this.previous = {
+        begin: new Date(),
         phi: this.phi,
         theta: this.theta,
         mouseX: e.pageX,
@@ -96,21 +101,23 @@ export default {
       }
 
       e = e.changedTouches ? e.changedTouches[0] : e
-      const speed = 0.05 * window.devicePixelRatio
+      const speed = 0.1 * window.devicePixelRatio
       if (this.dragging) {
+        this.animating = true
         this.mouseX = e.pageX
         this.mouseY = e.pageY
-        this.phi = this.previous.phi - speed * (this.mouseX - this.previous.mouseX)
+        this.target.phi = this.previous.phi - speed * (this.mouseX - this.previous.mouseX)
         let theta = this.previous.theta + speed * (this.mouseY - this.previous.mouseY)
-        this.theta = clamp(theta, -90, 90)
+        this.target.theta = clamp(theta, -90, 90)
       }
     },
 
     zoom(e) {
       e = window.event || e
       let delta = clamp(e.wheelDelta || -e.detail, -4, 4)
-      let fov = this.fov - delta
-      this.fov = clamp(fov, this.minFov, this.maxFov)
+      let fov = this.fov - delta * 10
+      this.animating = true
+      this.target.fov = clamp(fov, this.minFov, this.maxFov)
     },
 
     stopDrag() {
@@ -151,8 +158,10 @@ export default {
       canvas.height = canvas.clientHeight * ratio
 
       this.gl.viewport(0, 0, canvas.width, canvas.height)
-      if (this.program)
-        this.draw(true)
+      if (this.program) {
+        this.forceUpdate = true
+        this.draw()
+      }
     },
 
     initShaders() {
@@ -303,61 +312,74 @@ export default {
       this.resize()
     },
 
-    draw(force) {
+    draw() {
       const gl = this.gl
 
-      let {phi, theta, fov} = this
-      if (!force
-          && this.almostEqual(phi, this.previous.phi) 
-          && this.almostEqual(theta, this.previous.theta)
-          && this.almostEqual(fov, this.previous.fov)) {
-        requestAnimationFrame(this.draw.bind(this))
-        return 
+      let { phi, theta, fov } = this
+
+      if ((this.almostEqual(phi, this.target.phi) &&
+          this.almostEqual(theta, this.target.theta) &&
+          this.almostEqual(fov, this.target.fov))) {
+        this.animating = false
+      } else if (this.animating) {
+        // crappy linear tween
+        let speed = 1.0 / 16
+        phi += (this.target.phi - phi) * speed
+        theta += (this.target.theta - theta) * speed
+        fov += (this.target.fov - fov) * speed
+
+        this.phi = phi
+        this.theta = theta
+        this.fov = fov
       }
 
-      // calculate the viewing direction from the spherical coordinates
-      let dirX = Math.cos(Math.PI * this.phi / 180) * Math.cos(Math.PI * this.theta / 180)
-      let dirY = Math.sin(Math.PI * this.theta / 180)
-      let dirZ = Math.sin(Math.PI * this.phi / 180) * Math.cos(Math.PI * this.theta / 180)
+      if (this.animating || this.forceUpdate) {
+        // calculate the viewing direction from the spherical coordinates
+        let dirX = Math.cos(Math.PI * phi / 180) * Math.cos(Math.PI * theta / 180)
+        let dirY = Math.sin(Math.PI * theta / 180)
+        let dirZ = Math.sin(Math.PI * phi / 180) * Math.cos(Math.PI * theta / 180)
 
-      let viewerDirection = new Vec3(dirX, dirY, dirZ)
+        let viewerDirection = new Vec3(dirX, dirY, dirZ)
 
-      // the camera is located in the origin
-      let viewerPosition = new Vec3(0.0, 0.0, 0.0)
+        // the camera is located in the origin
+        let viewerPosition = new Vec3(0.0, 0.0, 0.0)
 
-      // Calculate the camera matrix depending on viewing direction
-      let modelviewMatrix = new Aff3d()
-      modelviewMatrix.lookAt(viewerPosition, viewerPosition.add(viewerDirection), new Vec3(0.0, 1.0, 0.0))
+        // Calculate the camera matrix depending on viewing direction
+        let modelviewMatrix = new Aff3d()
+        modelviewMatrix.lookAt(viewerPosition, viewerPosition.add(viewerDirection), new Vec3(0.0, 1.0, 0.0))
 
-      let projectionMatrix = new Aff3d()
-      let aspect = gl.drawingBufferWidth / gl.drawingBufferHeight
-      projectionMatrix.perspective(this.fov, aspect, 0.1, 2)
+        let projectionMatrix = new Aff3d()
+        let aspect = gl.drawingBufferWidth / gl.drawingBufferHeight
+        projectionMatrix.perspective(this.fov, aspect, 0.1, 2)
 
-      // clear screen
-      gl.clearColor(1.0, 1.0, 1.0, 1.0)
-      gl.clear(gl.COLOR_BUFFER_BIT)
+        // clear screen
+        gl.clearColor(1.0, 1.0, 1.0, 1.0)
+        gl.clear(gl.COLOR_BUFFER_BIT)
 
-      // pass parameters to the shader program
-      gl.uniformMatrix4fv(gl.getUniformLocation(this.program, 'modelviewMatrix'),
-        false, modelviewMatrix.data())
-      gl.uniformMatrix4fv(gl.getUniformLocation(this.program, 'projectionMatrix'),
-        false, projectionMatrix.data())
-      gl.uniform1i(gl.getUniformLocation(this.program, 'uSampler'), 0)
+        // pass parameters to the shader program
+        gl.uniformMatrix4fv(gl.getUniformLocation(this.program, 'modelviewMatrix'),
+          false, modelviewMatrix.data())
+        gl.uniformMatrix4fv(gl.getUniformLocation(this.program, 'projectionMatrix'),
+          false, projectionMatrix.data())
+        gl.uniform1i(gl.getUniformLocation(this.program, 'uSampler'), 0)
 
-      // draw each side of the cube with the corresponding texture of the cube map
-      let textures = this.textures
-      gl.bindTexture(gl.TEXTURE_2D, textures.front)
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
-      gl.bindTexture(gl.TEXTURE_2D, textures.back)
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 6 * 2)
-      gl.bindTexture(gl.TEXTURE_2D, textures.top)
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 12 * 2)
-      gl.bindTexture(gl.TEXTURE_2D, textures.bottom)
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 18 * 2)
-      gl.bindTexture(gl.TEXTURE_2D, textures.left)
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 24 * 2)
-      gl.bindTexture(gl.TEXTURE_2D, textures.right)
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 30 * 2)
+        // draw each side of the cube with the corresponding texture of the cube map
+        let textures = this.textures
+        gl.bindTexture(gl.TEXTURE_2D, textures.front)
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
+        gl.bindTexture(gl.TEXTURE_2D, textures.back)
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 6 * 2)
+        gl.bindTexture(gl.TEXTURE_2D, textures.top)
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 12 * 2)
+        gl.bindTexture(gl.TEXTURE_2D, textures.bottom)
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 18 * 2)
+        gl.bindTexture(gl.TEXTURE_2D, textures.left)
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 24 * 2)
+        gl.bindTexture(gl.TEXTURE_2D, textures.right)
+        gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 30 * 2)
+
+        this.forceUpdate = false
+      }
 
       requestAnimationFrame(this.draw.bind(this))
     }
@@ -427,11 +449,13 @@ export default {
       gl: null,
       dragging: false,
       pinching: false,
+      animating: true,
+      forceUpdate: true,
       error: '',
       fullscreen: {},
 
       phi: 90,
-      theta: 0,
+      theta: 30,
       fov: 45,
       mouseX: 0,
       mouseY: 0,
@@ -440,18 +464,19 @@ export default {
       maxFov: 90,
       
       previous: {
-        phi: 0,
+        begin: null,
+        phi: 180,
         theta: 0,
-        fov: 0,
+        fov: 45,
         mouseX: 0,
         mouseY: 0,
         touchPoints: []
       },
 
       target: {
-        phi: 0,
+        phi: 180,
         theta: 0,
-        fov: 0
+        fov: 45
       },
 
       textures: {
@@ -499,7 +524,6 @@ export default {
 
 .hover {
   box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
-  transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
 }
 
 .hover:hover {
