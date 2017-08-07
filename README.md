@@ -64,6 +64,11 @@ yarn run dev
 yarn run build
 ```
 
+## TODO
+
+- [ ] low quality preview background
+- [ ] image progress bar
+
 ## License
 
 MIT
