@@ -95,7 +95,7 @@ export default {
         this.animating = true
         let p1 = event.targetTouches[0], p2 = event.targetTouches[1]
         let distance = Math.sqrt(Math.pow(p2.pageX - p1.pageX, 2) + Math.pow(p2.pageY - p1.pageY, 2))
-        let fov = this.fov + (this.previous.pinchDistance - distance) / distance * (1000 / window.devicePixelRatio)
+        let fov = this.fov + (this.previous.pinchDistance - distance) / distance * (2000 / window.devicePixelRatio)
         this.previous.pinchDistance = distance
         this.target.fov = clamp(fov, this.minFov, this.maxFov)
         return
