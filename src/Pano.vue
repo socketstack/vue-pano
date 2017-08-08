@@ -68,7 +68,7 @@ export default {
       if (e.targetTouches && e.targetTouches.length >= 2) {
         let p1 = event.targetTouches[0], p2 = event.targetTouches[1]
         let distance = Math.sqrt(Math.pow(p2.pageX - p1.pageX, 2) + Math.pow(p2.pageY - p1.pageY, 2))
-        
+
         this.previous.pinchDistance = distance
         this.previous.fov = this.fov
         this.pinching = true
@@ -95,7 +95,7 @@ export default {
         this.animating = true
         let p1 = event.targetTouches[0], p2 = event.targetTouches[1]
         let distance = Math.sqrt(Math.pow(p2.pageX - p1.pageX, 2) + Math.pow(p2.pageY - p1.pageY, 2))
-        let fov = this.fov + (this.previous.pinchDistance - distance) / distance * (100 / window.devicePixelRatio)
+        let fov = this.fov + (this.previous.pinchDistance - distance) / distance * (1000 / window.devicePixelRatio)
         this.previous.pinchDistance = distance
         this.target.fov = clamp(fov, this.minFov, this.maxFov)
         return
@@ -166,7 +166,7 @@ export default {
     },
 
     initShaders() {
-      const gl = this.gl      
+      const gl = this.gl
       this.program = gl.createProgram()
 
       let vertex = this.shaders.vertex = gl.createShader(gl.VERTEX_SHADER)
@@ -200,7 +200,7 @@ export default {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT)
             gl.generateMipmap(gl.TEXTURE_2D)
             gl.bindTexture(gl.TEXTURE_2D, null)
-            
+
             resolve(url)
           }
           img.onerror = reject
@@ -208,7 +208,7 @@ export default {
         }))
 
       Promise.all(tasks).then(images => {
-        
+
       }).catch(e => {
         this.error = 'Unable to load all images'
       })
@@ -216,7 +216,7 @@ export default {
 
     initModel() {
       // Define the vertices for the cube.
-      // Each line represents one vertex 
+      // Each line represents one vertex
       // (x, y, z, u, v)
       const vertices = new Float32Array([
         -1.0, -1.0, 1.0, 1.0, 1.0,
@@ -463,7 +463,7 @@ export default {
 
       minFov: 20,
       maxFov: 90,
-      
+
       previous: {
         begin: null,
         phi: 180,
@@ -486,7 +486,7 @@ export default {
         front: null,
         back: null,
         left: null,
-        right: null,  
+        right: null,
       },
 
       program: null,
